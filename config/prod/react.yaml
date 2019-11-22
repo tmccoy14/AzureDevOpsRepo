@@ -1,0 +1,15 @@
+replicas: 2
+image:
+  repository: afsdigitalstudio-docker.jfrog.io/comet/react
+ingress:
+  enabled: true
+  hostname: "comet-prod-react.afsdigital.studio"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/affinity: cookie
+  tls:
+    - hosts:
+      - "afsdigital.studio"
+      - "*.afsdigital.studio"
+      secretName: ssl-cert

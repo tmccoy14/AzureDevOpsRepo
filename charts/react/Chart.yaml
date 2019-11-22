@@ -1,0 +1,8 @@
+apiVersion: v1
+appVersion: 0.1.0
+description: 'React Application'
+name: react
+version: 0.1.0
+maintainers:
+  - name: captjt
+    email: jordan.taylor@accenturefederal.com

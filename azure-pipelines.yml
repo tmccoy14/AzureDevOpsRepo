@@ -1,0 +1,64 @@
+# Node.js with React
+trigger:
+- master
+
+variables:
+  vmImage: 'ubuntu-latest'
+
+resources:
+  repositories:
+    - repository: Templates
+      type: git
+      name: Modern Custom Dev/Templates
+
+jobs:
+  - job: BuildTestScan
+    pool:
+      vmImage: $(vmImage)
+    steps:
+      # Node Install
+    - template: node-with-params.yml@Templates
+
+      # SonarQube Prepare
+    - template: sonarqubePrepare-with-params.yml@Templates
+      parameters:
+        configFile: 'sonar-project.properties'
+
+      # SonarQube Analyze
+    - template: sonarqubeAnalyze-with-params.yml@Templates
+
+  - job: PublishArtifacts
+    pool:
+      vmImage: $(vmImage)
+    dependsOn:
+        - BuildTestScan
+    steps:
+      # NPM Publish
+    - template: npm-with-params.yml@Templates
+      parameters:
+        workingDir: './'
+        publishRegistry: 'useFeed'
+        publishFeed: 'Examples'
+
+      # Install Docker And Build Docker Image
+    - template: docker-with-params.yml@Templates
+      parameters:
+        applicationName: 'react'
+
+  - job: Deploy
+    pool:
+      vmImage: $(vmImage)
+    dependsOn:
+        - PublishArtifacts
+    steps:
+      # Set Docker Image Tag Variable
+    - bash: |
+          export GIT_COMMIT=$(git rev-parse HEAD)
+          echo "##vso[task.setvariable variable=git_commit]$GIT_COMMIT"
+
+      # Helm Upgrade
+    - template: helm-with-params.yml@Templates
+      parameters:
+        chartPath: 'charts/react'
+        releaseName: 'react1'
+        valueFile: 'config/dev/react.yaml'
